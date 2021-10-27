@@ -11,8 +11,11 @@
 const rule = require("../../lib/rules/method");
 const RuleTester = require("eslint").RuleTester;
 
-const PATH_TO_BABEL_ESLINT = `${process.cwd()}/node_modules/babel-eslint/`;
-const PATH_TO_TYPESCRIPT_ESLINT = `${process.cwd()}/node_modules/@typescript-eslint/parser/`;
+const { 
+  PATH_TO_BABEL_ESLINT,
+  PATH_TO_TYPESCRIPT_ESLINT,
+  parseWithBabelFlow,
+} = require("../helpers");
 
 //------------------------------------------------------------------------------
 // Tests
@@ -159,7 +162,8 @@ eslintTester.run("method", rule, {
         // Issue 83: Support import() expressions as parsed by babel-eslint
         {
             code: "import('lodash')",
-            parser: PATH_TO_BABEL_ESLINT
+            parser: PATH_TO_BABEL_ESLINT,
+            parserOptions: { requireConfigFile: false },
         },
 
         // Issue 135: Check literal imports in all parsers:
@@ -307,15 +311,15 @@ eslintTester.run("method", rule, {
         // Flow support tests
         {
             code: "(node: HTMLElement).insertAdjacentHTML('beforebegin', 'raw string');",
-            parser: PATH_TO_BABEL_ESLINT,
+            ...parseWithBabelFlow,
         },
         {
             code: "node.insertAdjacentHTML('beforebegin', (5: string));",
-            parser: PATH_TO_BABEL_ESLINT,
+            ...parseWithBabelFlow,
         },
         {
             code: "(insertAdjacentHTML: function)('afterend', 'static string');",
-            parser: PATH_TO_BABEL_ESLINT,
+            ...parseWithBabelFlow,
         },
 
 
@@ -327,6 +331,7 @@ eslintTester.run("method", rule, {
         {
             code: "foo.import(bar)",
             parser: PATH_TO_BABEL_ESLINT,
+            parserOptions: { requireConfigFile: false },
         },
         {
             code: "foo.import(bar)",
@@ -508,6 +513,7 @@ eslintTester.run("method", rule, {
         {
             code: "import(foo)",
             parser: PATH_TO_BABEL_ESLINT,
+            parserOptions: { requireConfigFile: false },
             errors: [
                 {
                     message: "Unsafe call to import for argument 0",
@@ -793,17 +799,17 @@ eslintTester.run("method", rule, {
 
         {
             code: "(node: HTMLElement).insertAdjacentHTML('beforebegin', unsafe);",
-            parser: PATH_TO_BABEL_ESLINT,
+            ...parseWithBabelFlow,
             errors: [
                 {
                     message: "Unsafe call to node: HTMLElement.insertAdjacentHTML for argument 1",
                     type: "CallExpression"
                 }
-            ]
+            ] 
         },
         {
             code: "node.insertAdjacentHTML('beforebegin', (unsafe: string));",
-            parser: PATH_TO_BABEL_ESLINT,
+            ...parseWithBabelFlow,
             errors: [
                 {
                     message: "Unsafe call to node.insertAdjacentHTML for argument 1",
@@ -813,7 +819,7 @@ eslintTester.run("method", rule, {
         },
         {
             code: "(insertAdjacentHTML: function)('beforebegin', unsafe);",
-            parser: PATH_TO_BABEL_ESLINT,
+            ...parseWithBabelFlow,
             errors: [
                 {
                     message: "Unsafe call to insertAdjacentHTML for argument 1",

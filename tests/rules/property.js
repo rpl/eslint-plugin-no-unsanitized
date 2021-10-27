@@ -11,8 +11,12 @@
 const rule = require("../../lib/rules/property");
 const RuleTester = require("eslint").RuleTester;
 
-const PATH_TO_BABEL_ESLINT = `${process.cwd()}/node_modules/babel-eslint/`;
-const PATH_TO_TYPESCRIPT_ESLINT = `${process.cwd()}/node_modules/@typescript-eslint/parser/`;
+const { 
+  PATH_TO_BABEL_ESLINT,
+  PATH_TO_TYPESCRIPT_ESLINT,
+  parseWithBabelFlow,
+  parseWithBabelPresetEnv,
+} = require("../helpers");
 
 //------------------------------------------------------------------------------
 // Tests
@@ -192,19 +196,19 @@ eslintTester.run("property", rule, {
         // Flow support cases
         {
             code: "(x: HTMLElement).innerHTML = 'static string'",
-            parser: PATH_TO_BABEL_ESLINT,
+            ...parseWithBabelFlow,
         },
         {
             code: "(x: HTMLElement).innerHTML = '<b>safe</b>'",
-            parser: PATH_TO_BABEL_ESLINT,
+            ...parseWithBabelFlow,
         },
         {
             code: "(x: HTMLElement).innerHTML = '<b>safe</b>'",
-            parser: PATH_TO_BABEL_ESLINT,
+            ...parseWithBabelFlow,
         },
         {
             code: "(items[i](args): HTMLElement).innerHTML = 'rawstring';",
-            parser: PATH_TO_BABEL_ESLINT,
+            ...parseWithBabelFlow,
         },
 
         // support for variables that are declared elsewhere
@@ -510,7 +514,7 @@ eslintTester.run("property", rule, {
         // Flow support cases
         {
             code: "(x: HTMLElement).innerHTML = htmlString",
-            parser: PATH_TO_BABEL_ESLINT,
+            ...parseWithBabelFlow,
             errors: [
                 {
                     message: "Unsafe assignment to innerHTML",
@@ -520,7 +524,7 @@ eslintTester.run("property", rule, {
         },
         {
             code: "node.innerHTML = (foo: string);",
-            parser: PATH_TO_BABEL_ESLINT,
+            ...parseWithBabelFlow,
             errors: [
                 {
                     message: "Unsafe assignment to innerHTML",
@@ -530,7 +534,7 @@ eslintTester.run("property", rule, {
         },
         {
             code: "(items[i](args): HTMLElement).innerHTML = unsafe;",
-            parser: PATH_TO_BABEL_ESLINT,
+            ...parseWithBabelFlow,
             errors: [
                 {
                     message: "Unsafe assignment to innerHTML",
@@ -542,26 +546,27 @@ eslintTester.run("property", rule, {
         // ES2020 support cases
         {
             code: "yoink.innerHTML &&= bar;",
+            ...parseWithBabelPresetEnv,
             errors: [
                 {
                     message: "Unsafe assignment to innerHTML",
                     type: "AssignmentExpression"
                 }
             ],
-            parser: PATH_TO_BABEL_ESLINT,
         },
         {
             code: "yoink.innerHTML ||= bar;",
+            ...parseWithBabelPresetEnv,
             errors: [
                 {
                     message: "Unsafe assignment to innerHTML",
                     type: "AssignmentExpression"
                 }
             ],
-            parser: PATH_TO_BABEL_ESLINT,
         },
         {
             code: "yoink.innerHTML ??= bar;",
+            ...parseWithBabelPresetEnv,
             errors: [
                 {
                     message: "Unsafe assignment to innerHTML",
@@ -569,6 +574,7 @@ eslintTester.run("property", rule, {
                 }
             ],
             parser: PATH_TO_BABEL_ESLINT,
+            parserOptions: { requireConfigFile: false },
         },
 
         // Ensure normalizeMethodCall expects a CallExpression with a CallExpression callee.
